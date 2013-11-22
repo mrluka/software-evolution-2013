@@ -20,7 +20,7 @@ data ProjectTree = root(set[ProjectTree] projects)
         
         
 public ProjectTree makeProjectTree(loc projectLoc){
-	println("making project tree");
+	println("\>making project tree\<");
 	Resource projectResource = getProject(projectLoc);
 	return makeTree(projectResource);
 }    

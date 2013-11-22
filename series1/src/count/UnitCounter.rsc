@@ -23,7 +23,7 @@ anno int ProjectTree @importsCount;
 
 
 public ProjectTree countProjectElements(ProjectTree project){
-	println("counting project\'s physical data");
+	println("\>counting project\'s physical data\<");
 	return countContent(project);
 }
 
@@ -43,7 +43,7 @@ private ProjectTree countContent(ProjectTree projectTree){
 		
 		case ProjectTree f : folder(id, contents) :{ //FOLDER: sourcesCount, unitsCount, classesCount
 			set[ProjectTree] sourceFiles = {};  
-			for(sFile <- contents){
+			for(sFile <- contents){ //For each source file in folder
 				ProjectTree countedSourceFile = countSourceFileElements(sFile); 
 				sourceFiles += countedSourceFile;
 				folderUnitsCount += countedSourceFile@unitsCount;

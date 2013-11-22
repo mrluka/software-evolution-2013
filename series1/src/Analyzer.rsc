@@ -4,6 +4,8 @@ module Analyzer
 import TreeProcessor;
 import count::LocCounter;
 import count::UnitCounter;
+import duplicate::DuplicationHasher;
+import duplicate::DuplicateChecker;
 import Prelude;
 import util::Resources;
 import IO;
@@ -20,29 +22,38 @@ import util::Benchmark;
 
 public void analyzeProjects(){
 	loc smallProjectLocation = |project://smallsql0.21_src/|;
-	//Create Project Tree
+	
+	//MAKE TREE 
 	int starts = realTime();
 	ProjectTree project = makeProjectTree(smallProjectLocation);
 	int stops  = realTime();
 	println("completed making tree in: <stops-starts> ms");
 	
-	
+	//COUNT
 	starts  = realTime();
 	ProjectTree countedTree = countProjectElements(project);
 	stops  = realTime();
 	println("completed counting project elements in: <stops-starts> ms");
-	//printCountedTreeInfo(countedTree);
-	
 	 	
 	//LOC
 	starts  = realTime();
 	ProjectTree locProject = countLoc(countedTree);
 	stops  = realTime();
 	println("completed counting LOCs in: <stops-starts> ms");
-	//printLOCInfo(locProject);
-		//writeFile(|project://series1/src/testOutput.txt|,project);
-	//iprintToFile(|project://series1/src/testOutput1.txt|,project);
 	
+	//DUPLICATION
+	//ProjectTree line2HashMapTree  = makeLine2HashMaps(locProject);
+	checkDuplication(line2HashMapTree);
+	 
+	//PRINT
+	//printProjectInformation(locProject);
+	
+}
+private void printProjectInformation(ProjectTree project){
+	printCountedTreeInfo(project);
+	printLOCInfo(project);
+	//writeFile(|project://series1/src/testOutput.txt|,project);
+	//iprintToFile(|project://series1/src/testOutput1.txt|,project);
 }
 
 //- -- -- - - --------- - -- -- - - --------- - -- -- - - --------- - -- -- - - ---------
@@ -88,7 +99,6 @@ private void printCountedSourceFiles(ProjectTree project){
 		}
 	}
 }
-
 
 //- -- -- - - --------- - -- -- - - --------- - -- -- - - --------- - -- -- - - ---------
 //- -- -- - - --------- - -- -- LOC - - --------- - -- -- - - --------- - -- -- - - ---------

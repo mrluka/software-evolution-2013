@@ -23,7 +23,7 @@ anno int Declaration @LOC;
 
 // Count LOC for each source file of project tree
 public ProjectTree countLoc(ProjectTree project){
-	println("counting LOC");
+	println("\>counting LOC\<");
 	return bottom-up visit(project) { // bottom up needed?!
 		case ProjectTree sf: sourceFile(loc id, Declaration declaration):{
 				set[int] relevantLineNumbers = regexCountTree(id);
