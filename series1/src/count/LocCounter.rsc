@@ -32,7 +32,6 @@ public ProjectTree countLoc(ProjectTree project){
 				sf.declaration = countUnitsLines(declaration);
 				insert sf; 
 		}
-		
 	}
 }
 
@@ -68,49 +67,45 @@ private set[int] regexCountTree(loc sourceFileLOC){
 private set[int] filterOutUnrelevantLines(list[str] lines){ //such as whitespace, comments ,..
 	bool isOpenComment = false; // true if multi-line comment tag was found. i.e.: if true, then is current line commented out
 	set[int] relevantLines = {};
-	int lineCounter = 0;	
+	int linePointer = 0;	
 	for(line <- lines){
-		lineCounter += 1;
-		//WHITESPACE  && ONE-LINE COMMENT
-		if(isWhitespaceLine(line) || isOneLineComment(line)){
+		linePointer += 1;
+		if(isWhitespaceLine(line)){ //WHITESPACE  && ONE-LINE COMMENT
 			continue; //if empty line or one line comment, skip.
 		} 
-		//INLINE COMMENT
-		if(hasInlineComment(line)){ // Extra check for inline comments, such as /*comment*/
-			relevantLines += lineCounter;
+		if(isOneLineComment(line)){
 			continue;
 		}
-		//MULTI-LINE COMMENT - OPEN TAG
-		if(isCommentOpeningTag(line)){ //if opening tag for multi-line comment was found 
+		if(isRelevantLine(line) ){ // Line starts NOT with comment tag
+			if(!isOpenComment){
+				relevantLines += linePointer; //add current line number to relevant line numbers. Not whitespace, not comment or part of comment
+			} // do NOT continue, line could be relevant and have a comment tag somewhere
+		}
+		if(isCommentOpeningTag(line)){ // OPEN TAG -MULTI-LINE COMMENT 
 			isOpenComment = true;
+			continue;
 		} 
-		//MULTI-LINE COMMENT - CLOSING TAG
-		else if(isCommentClosingTag(line)){ //if closing tag for multi-line comment was found
-			if(!isOpenComment){
-				println("!!!closing without previous opening: <line>"); //if closing tag without previous opening tag was found
-			}
+		if(isCommentClosingTag(line)){ // CLOSING TAG - MULTI-LINE COMMENT
 			isOpenComment = false; //reset tag indicator
-		}
-		//MULTI-LINE COMMENT - LINE (entity of the multi-line comment)
-		else if(isMultiCommentLine(line)){
-			if(!isOpenComment){
-				println("!!!closing without previous opening: <line>"); //if closing tag without previous opening tag was found
-			}
-		}
-		
-		else{
-			if(isOpenComment){ //if there was a multi-line comment start tag, it's following lines must be comments aswell 
-								// until closing tag occurs. So skip this line, it is part of multi-line comment
-				continue;
-			}			
-			relevantLines += lineCounter; //add current line number to relevant line numbers. Not whitespace, not comment or part of comment
+			continue;
 		}
 	}
 	return relevantLines;
 }
+		
 
-private bool hasInlineComment(str line){
-	if( /^\s*\t*\w+.*\/\*.*\*\/$/s :=line){ // ws, tab, word /* ... */ 
+// if does not start with comment trigger AND if not in multi-line comment opeing before
+private bool isRelevantLine(str line){
+	if( /^\s*\t*\w+.*$/s :=line){ // ws, tab, word ...
+		return true;
+	}
+	if( /^.*\*\/.*w+/s :=line){ // ws, tab, /* comment */ word 
+		return true;
+	}
+	if(/^\s*\t*}*\(*\)*\w+.*/s := line){
+		return true;
+	}
+	if(!isWhitespaceLine(line) && !isOneLineComment(line) && ! isCommentOpeningTag(line) && !isMultiCommentLine(line)){
 		return true;
 	}
 	return false;
@@ -124,18 +119,17 @@ private bool isWhitespaceLine(str line){
 }
 
 private bool isOneLineComment(str line){
-	if( /^\s*\/\/.*$/s :=line){ // -> ws //comment ..
+	if( /^\s*\t*\/\/.*$/s :=line){ // -> ws //comment ..
 		return true;
 	}
-	if( /^\s*\t*\/\*.*\*\/.*$/s :=line){ // -> /* .. */ ..
+	if( /^\s*\t*\/\*.*\*\/\s*\t*$/s :=line){ // -> /* .. */ 
 		return true;
 	}
-	
 	return false;	
 }
 
 private bool isCommentOpeningTag(str line){
-	 if( /^\s*\t*\/\*?(\*).*$/s :=line){ // ws, tab, /* ..
+	 if( /^\s*\t*\/\*.*$/s :=line){ // ws, tab, /* ..
 		return true;
 	}
 	return false;
@@ -155,7 +149,6 @@ private bool isCommentClosingTag(str line){
 	return false;
 }
 
-
 //- -- -- - - --------- - -- -- - - --------- - -- -- - - --------- - -- -- - - ---------
 //- -- -- - - --------- - -- -- PRINT: LOC - - --------- - -- -- - - --------- - -- -- - - ---------
 //- -- -- - - --------- - -- -- - - --------- - -- -- - - --------- - -- -- - - --------- 
@@ -172,7 +165,6 @@ public void printLOCInfo(ProjectTree project){ // STEP 2
 			println("Source file: <id>");
 			println("LOC:<sf@LOC>");
 			println("Lines count:<sf@linesSet> ");
-			//println("units:<sf@unitsCount> ");
 			printDeclarationInfo(declaration);
 		}
 		
@@ -199,16 +191,3 @@ private void printMethodInfo(Declaration method){//
 	println("MethLOC: <method@LOC> ");
 	println("MethLines:<sort(toList(method@linesSet))> "); //CAUTION, sort is slow !!!!!!!!!!!!!!
 }
-
-
-
-
-
-
-
-
-//public void ad(){
-////|project://smallsql0.21_src/src/smallsql/database/Database.java|(10799,260,<309,1>,<313,2>)
-//list[str] fileLines = readFileLines(|project://smallsql0.21_src/src/smallsql/database/Database.java|(10799,260,<309,1>,<313,2>)); //read file and get each line represented as str in list
-//println(fileLines);
-//}

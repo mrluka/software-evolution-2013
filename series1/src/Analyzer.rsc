@@ -49,7 +49,7 @@ public void analyzeProjects(){
 	stops  = realTime();
 	println("completed counting LOCs in: <stops-starts> ms");
 	
-	//COMPLEXITY
+	////COMPLEXITY
 	starts  = realTime();
 	compProject = getComplexityTree(locProject);
 	stops = realTime();
@@ -64,11 +64,12 @@ public void analyzeProjects(){
 	//checkDuplication(line2HashMapTree);
 	 
 	//PRINT
-	printProjectInformation(locProject);
-	
+	printProjectInformation(locProject);	
 }
+
+
 private void printProjectInformation(ProjectTree project){
-	printCountedTreeInfo(project);
+	//printCountedTreeInfo(project);
 	printLOCInfo(project);
 	//writeFile(|project://series1/src/testOutput.txt|,project);
 	//iprintToFile(|project://series1/src/testOutput1.txt|,project);
