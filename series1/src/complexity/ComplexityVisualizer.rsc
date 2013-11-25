@@ -4,13 +4,13 @@ import vis::Render;
 import vis::Figure;
 import util::Math;
 
-public void showRiskLevels(int low, int medium, int high, int veryHigh,int totalLoc){
+public void showRiskLevels(real low, real medium, real high, real veryHigh,int totalLoc){
 	 bar1 = getBar(low,medium,high,veryHigh, totalLoc); 
 	 render(bar1);
 }
 
 
-private Figure getBar(int v1, int v2, int v3, int v4, int max){
+private Figure getBar(real v1, real v2, real v3, real v4, int max){
 	 b1 = getBox("low",v1,"white", max);
 	 b2 = getBox("medium",v2,"green", max);
 	 b3 = getBox("high",v3,"orange", max);
@@ -18,7 +18,7 @@ private Figure getBar(int v1, int v2, int v3, int v4, int max){
 	 return vcat([b1,b2,b3,b4, box(fillColor("gray"))]);
 }
 
-private Figure getBox(txt,int hght,color, int max){
+private Figure getBox(txt,real hght,color, int max){
 	 return box(
 	 	text(txt),
 	 	vshrink(getRelativeHeight(max, hght)),
@@ -26,7 +26,7 @@ private Figure getBox(txt,int hght,color, int max){
 	 );
 }
 
-private real getRelativeHeight(int max, int val){
+private real getRelativeHeight(int max, real val){
 	 real onePerc = toReal(max) / 100;
 	 if(onePerc == 0){
 	 	onePerc = 1.0;

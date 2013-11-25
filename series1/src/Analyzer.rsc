@@ -7,6 +7,7 @@ import count::UnitCounter;
 import complexity::ComplexityAnalyzer;
 import duplicate::DuplicationHasher;
 import duplicate::DuplicateChecker;
+import sig::Rating;
 import Prelude;
 import util::Resources;
 import IO;
@@ -49,22 +50,35 @@ public void analyzeProjects(){
 	stops  = realTime();
 	println("completed counting LOCs in: <stops-starts> ms");
 	
-	////COMPLEXITY
+	////COMPLEXITY (incl RATING)
 	starts  = realTime();
 	compProject = getComplexityTree(locProject);
 	stops = realTime();
 	println("completed complexity analysis in: <stops-starts> ms");
 	starts  = realTime();
-	printRiskLevelOverview(compProject);
+	rating_complexity = printRiskLevelOverview(compProject);
 	stops = realTime();
 	println("comleted risk level analysis in: <stops-starts> ms");
+	
+	////RATING VOLUME
+	rating_loc = getLocRating(compProject);
+	
+	////RATING UNIT SIZE
+	rating_avg_loc = getAvgLocRating(compProject);
 	
 	//DUPLICATION
 	//ProjectTree line2HashMapTree  = makeLine2HashMaps(locProject);
 	//checkDuplication(line2HashMapTree);
+	
+	////RATING DUPLICATION (should be percentage between 0 and 100)
+	duplication = 8;
+	rating_duplication = getDuplicationRating(duplication);
 	 
 	//PRINT
 	printProjectInformation(locProject);	
+	
+	////RATING RESULT
+	printOverview(rating_loc,rating_complexity,rating_duplication,rating_avg_loc);
 }
 
 

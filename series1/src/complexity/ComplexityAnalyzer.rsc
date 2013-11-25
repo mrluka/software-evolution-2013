@@ -5,6 +5,7 @@ import complexity::ExpressionComplexity;
 import complexity::StatementComplexity;
 import complexity::ComplexityRiskLevels;
 import complexity::ComplexityVisualizer;
+import sig::Rating;
 import count::LocCounter;
 import lang::java::m3::AST;
 import IO; 
@@ -12,97 +13,62 @@ import util::Math;
 	
 anno int Declaration @ methodCount;
 anno int Declaration @ complexity;
-anno int Declaration @ riskLevel;
 anno set[Declaration] ProjectTree @ classes;
 
 public ProjectTree getComplexityTree(ProjectTree project){
 	println("Calulcating complexity");
 	return visit(project){
-	 case ProjectTree p : project(loc id,str name, set[ProjectTree] contents):{
-	  insert(getComplexityOfProject(p));
-	 }		  
+		case ProjectTree p : project(loc id,str name, set[ProjectTree] contents):{
+			insert(getComplexityOfProject(p));
+		}		  
 	}
 }
 
-public real getAverageUnitComplexity(ProjectTree project){
- println("Calculating avg. method complexity");
- real total = 0.0;
- real count = 1.0;
- visit(project){
-  case ProjectTree sf : sourceFile(id, Declaration declaration) :{
-    visit(declaration){
-     case Declaration cl : \class(str name, list[Type] extends, list[Type] implements, list[Declaration] body):{
-       visit(body){
-       case m : \method(Type \return, str mname, list[Declaration] parameters, list[Expression] exceptions, Statement impl) : {
-        total += m@complexity;
-        println("Complexity of <mname> is <m@complexity>");
-        count += 1;
-       }
-      }
-     } 
-    }
-   }
-  }
-  real ret = total / count;
-  return ret;
+public int printRiskLevelOverview(ProjectTree project){
+	 int totalMLoc = getTotalMethodLoc(project);
+	 int totalLoc = getTotalLoc(project);
+	 println("total LOC is <totalLoc>");
+	 println("total LOC of methods is <totalMLoc>");
+	 real onePerc = getOnePerc(totalLoc);
+	 real onePercM = getOnePerc(totalMLoc);
+	 println("Calculating risk level distribution over source code");
+	 real lowPerc = printRiskLevel(RISK_LEVEL_LOW, project,onePerc,onePercM, "low");
+	 real mediumPerc = printRiskLevel(RISK_LEVEL_MEDIUM, project,onePerc,onePercM, "medium");
+	 real highPerc = printRiskLevel(RISK_LEVEL_HIGH, project,onePerc,onePercM, "high");
+	 real veryHighPerc = printRiskLevel(RISK_LEVEL_VERY_HIGH, project,onePerc,onePercM, "very high");
+	 ret = printComplexityRating(mediumPerc, highPerc, veryHighPerc);
+	 complexity::ComplexityVisualizer::showRiskLevels(lowPerc, mediumPerc, highPerc, veryHighPerc,100);
+	 return ret;
 }
 
-public void printRiskLevelOverview(ProjectTree project){
- int totalMLoc = getTotalMethodLoc(project);
- int totalLoc = getTotalLoc(project);
- println("total LOC is <totalLoc>");
- println("total LOC of methods is <totalMLoc>");
- real onePerc = toReal(totalLoc)/100;
- if(onePerc == 0){
-  onePerc = 1.0;
- }
- real onePercM = toReal(totalMLoc) / 100;
- if(onePercM == 0){
-  onePercM = 1.0;
- }
- println("Calculating risk level distribution over source code");
- int low = countMethodsWithRiskLevel(project, RISK_LEVEL_LOW);
- int lowL = sumMethodLengthsWithRiskLevel(project, RISK_LEVEL_LOW);
- println("Read output like:");
- println("X methods with Y risk level have a length of Z (percentage of total LOC) (percentage of method LOC)");
- lowPerc = (lowL) / (onePerc);
- lowPercM = (lowL) / (onePercM);
- println("<low> methods with low risk level have a length of <lowL> (<lowPerc>%) (<lowPercM>%)");
- int medium = countMethodsWithRiskLevel(project, RISK_LEVEL_MEDIUM);
- int mediumL = sumMethodLengthsWithRiskLevel(project, RISK_LEVEL_MEDIUM);
- mediumPerc = (mediumL) / (onePerc);
- mediumPercM = (mediumL) / (onePercM);
- println("<medium> methods with medium risk level have a length of <mediumL> (<mediumPerc>%) (<mediumPercM>%)");
- int high = countMethodsWithRiskLevel(project, RISK_LEVEL_HIGH);
- int highL = sumMethodLengthsWithRiskLevel(project, RISK_LEVEL_HIGH);
- highPerc = (highL) / (onePerc);
- highPercM = (highL) / (onePercM);
- println("<high> methods with high risk level have a length of <highL> (<highPerc>%) (<highPercM>%)");
- int very_high = countMethodsWithRiskLevel(project, RISK_LEVEL_VERY_HIGH);
- int very_highL = sumMethodLengthsWithRiskLevel(project, RISK_LEVEL_VERY_HIGH);
- veryHighPerc = (very_highL) / (onePerc);
- veryHighPercM = (very_highL) / (onePercM);
- println("<very_high> methods with very high risk level have a length of <very_highL> (<veryHighPerc>%) (<veryHighPercM>%)");
- printComplexityRating(mediumPerc, highPerc, veryHighPerc);
- complexity::ComplexityVisualizer::showRiskLevels(lowL, mediumL, highL, very_highL,totalLoc);
+public int getLocRating(ProjectTree project){
+	int totalLoc = getTotalLoc(project);	
+	return printLocRating(totalLoc);
 }
 
-private void printComplexityRating(mediumPerc, highPerc, veryHighPerc){
-	str output = "--";
-	if(highPerc <= 15 && veryHighPerc <= 5 && mediumPerc <= 50){
-		output = "-";
-	}
-	if(highPerc <= 10 && veryHighPerc == 0 && mediumPerc  <= 40){
-		output = "o";
-	}
-	if(highPerc <= 5 && veryHighPerc == 0 && mediumPerc <= 30){
-		output = "+";
-	}
-	if(highPerc == 0 && veryHighPerc == 0 && mediumPerc <= 25){
-		output = "++";
-	}
-		
-	println("Complexity rating is <output>");
+public int getAvgLocRating(ProjectTree project){
+	int totalMLoc = getTotalMethodLoc(project);
+	int totalLoc = getTotalLoc(project);
+	real onePerc = getOnePerc(totalLoc);
+	real onePercM = getOnePerc(totalMLoc);	
+	return printAverageUnitLocRating(project,onePerc,onePercM);
+}
+
+private real getOnePerc(int oneHundred){
+	 real onePerc = toReal(oneHundred)/100;
+	 if(onePerc == 0){
+	  onePerc = 1.0;
+	 }	 
+	 return onePerc;
+}
+
+private real printRiskLevel(level, project, onePerc, onePercM, levelStr){
+	 int count = countMethodsWithRiskLevel(project, level);
+	 int sum = sumMethodLengthsWithRiskLevel(project, level);
+	 perc = (sum) / (onePerc);
+	 percM = (sum) / (onePercM);
+	 println("<count> methods with <levelStr> risk level have a length of <sum> (<perc>% of total LOC) (<percM>% of method LOC)");
+	 return perc;
 }
 
 private ProjectTree getComplexityOfProject(ProjectTree project){
@@ -110,7 +76,6 @@ private ProjectTree getComplexityOfProject(ProjectTree project){
  int methods = 0;
  int methodComplexity = 0;
  int constructorComplexity = 0;
-				
  return bottom-up visit(project){
 	  case f : folder(id, contents) :{
 	   insert f;
@@ -158,49 +123,21 @@ private ProjectTree getComplexityOfProject(ProjectTree project){
 }
 
 private int getTotalMethodLoc(ProjectTree tree){
-int total = 0;
-visit(tree){
- case m: \method(Type \return, str mname, list[Declaration] parameters, list[Expression] exceptions, Statement impl) : {
-  total += m@LOC;
- }
-}
-return total;
+	int total = 0;
+	visit(tree){
+		case m: \method(Type \return, str mname, list[Declaration] parameters, list[Expression] exceptions, Statement impl) : {
+			total += m@LOC;
+		}
+	}
+	return total;
 }
 
 private int getTotalLoc(ProjectTree tree){
-int total = 0;
-visit(tree){
- case ProjectTree sf: sourceFile(loc id, Declaration declaration):{
-  total += sf@LOC;
- }
-}
-return total;
-}
-
-private int countMethodsWithRiskLevel(ProjectTree tree, int riskLevel){
-int total = 0;
-visit(tree){
- case m: \method(Type \return, str mname, list[Declaration] parameters, list[Expression] exceptions, Statement impl) : {
-  if(m@riskLevel == riskLevel){
-   total += 1;
-  }
- }
-}
-return total;
-}
-
-private int sumMethodLengthsWithRiskLevel(ProjectTree tree, int riskLevel){
-int lines = 0;
-visit(tree){
- case m: \method(Type \return, str mname, list[Declaration] parameters, list[Expression] exceptions, Statement impl) : {
-  if(m@riskLevel == riskLevel){
-   lines += m@LOC;
-  }
- }
-}
-return lines;
-}
-
-private int getLinesOfCode(loc method){
-  return method.end.line - method.begin.line;
+	int total = 0;
+	visit(tree){
+		case ProjectTree sf: sourceFile(loc id, Declaration declaration):{
+			total += sf@LOC;
+		}
+	}
+	return total;
 }
