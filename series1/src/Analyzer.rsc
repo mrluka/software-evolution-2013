@@ -4,6 +4,7 @@ module Analyzer
 import TreeProcessor;
 import count::LocCounter;
 import count::UnitCounter;
+import complexity::ComplexityAnalyzer;
 import duplicate::DuplicationHasher;
 import duplicate::DuplicateChecker;
 import Prelude;
@@ -22,7 +23,6 @@ import util::Benchmark;
 
 public void analyzeProjects(){
 	loc smallProjectLocation = |project://smallsql0.21_src/|;
-	loc largeProjectLocation = |project://smallsql0.21_src/|;
 	
 	//MAKE TREE 
 	int starts = realTime();
@@ -49,12 +49,22 @@ public void analyzeProjects(){
 	stops  = realTime();
 	println("completed counting LOCs in: <stops-starts> ms");
 	
+	//COMPLEXITY
+	starts  = realTime();
+	compProject = getComplexityTree(locProject);
+	stops = realTime();
+	println("completed complexity analysis in: <stops-starts> ms");
+	starts  = realTime();
+	printRiskLevelOverview(compProject);
+	stops = realTime();
+	println("comleted risk level analysis in: <stops-starts> ms");
+	
 	//DUPLICATION
 	//ProjectTree line2HashMapTree  = makeLine2HashMaps(locProject);
 	//checkDuplication(line2HashMapTree);
 	 
 	//PRINT
-	printProjectInformation(locProject);
+	//printProjectInformation(locProject);
 	
 }
 private void printProjectInformation(ProjectTree project){
