@@ -4,6 +4,7 @@ import TreeProcessor;
 import complexity::ExpressionComplexity;
 import complexity::StatementComplexity;
 import complexity::ComplexityRiskLevels;
+import complexity::ComplexityVisualizer;
 import count::LocCounter;
 import lang::java::m3::AST;
 import IO; 
@@ -64,16 +65,44 @@ public void printRiskLevelOverview(ProjectTree project){
  int lowL = sumMethodLengthsWithRiskLevel(project, RISK_LEVEL_LOW);
  println("Read output like:");
  println("X methods with Y risk level have a length of Z (percentage of total LOC) (percentage of method LOC)");
- println("<low> methods with low risk level have a length of <lowL> (<(lowL) / (onePerc)>%) (<(lowL) / (onePercM)>%)");
+ lowPerc = (lowL) / (onePerc);
+ lowPercM = (lowL) / (onePercM);
+ println("<low> methods with low risk level have a length of <lowL> (<lowPerc>%) (<lowPercM>%)");
  int medium = countMethodsWithRiskLevel(project, RISK_LEVEL_MEDIUM);
  int mediumL = sumMethodLengthsWithRiskLevel(project, RISK_LEVEL_MEDIUM);
- println("<medium> methods with medium risk level have a length of <mediumL> (<(mediumL) / (onePerc)>%) (<(mediumL) / (onePercM)>%)");
+ mediumPerc = (mediumL) / (onePerc);
+ mediumPercM = (mediumL) / (onePercM);
+ println("<medium> methods with medium risk level have a length of <mediumL> (<mediumPerc>%) (<mediumPercM>%)");
  int high = countMethodsWithRiskLevel(project, RISK_LEVEL_HIGH);
  int highL = sumMethodLengthsWithRiskLevel(project, RISK_LEVEL_HIGH);
- println("<high> methods with high risk level have a length of <highL> (<(highL) / (onePerc)>%) (<(highL) / (onePercM)>%)");
+ highPerc = (highL) / (onePerc);
+ highPercM = (highL) / (onePercM);
+ println("<high> methods with high risk level have a length of <highL> (<highPerc>%) (<highPercM>%)");
  int very_high = countMethodsWithRiskLevel(project, RISK_LEVEL_VERY_HIGH);
  int very_highL = sumMethodLengthsWithRiskLevel(project, RISK_LEVEL_VERY_HIGH);
- println("<very_high> methods with very high risk level have a length of <very_highL> (<(very_highL) / (onePerc)>%) (<(very_highL) / (onePercM)>%)");
+ veryHighPerc = (very_highL) / (onePerc);
+ veryHighPercM = (very_highL) / (onePercM);
+ println("<very_high> methods with very high risk level have a length of <very_highL> (<veryHighPerc>%) (<veryHighPercM>%)");
+ printComplexityRating(mediumPerc, highPerc, veryHighPerc);
+ complexity::ComplexityVisualizer::showRiskLevels(lowL, mediumL, highL, very_highL,totalLoc);
+}
+
+private void printComplexityRating(mediumPerc, highPerc, veryHighPerc){
+	str output = "--";
+	if(highPerc <= 15 && veryHighPerc <= 5 && mediumPerc <= 50){
+		output = "-";
+	}
+	if(highPerc <= 10 && veryHighPerc == 0 && mediumPerc  <= 40){
+		output = "o";
+	}
+	if(highPerc <= 5 && veryHighPerc == 0 && mediumPerc <= 30){
+		output = "+";
+	}
+	if(highPerc == 0 && veryHighPerc == 0 && mediumPerc <= 25){
+		output = "++";
+	}
+		
+	println("Complexity rating is <output>");
 }
 
 private ProjectTree getComplexityOfProject(ProjectTree project){
