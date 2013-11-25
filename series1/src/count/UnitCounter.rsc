@@ -96,3 +96,48 @@ private ProjectTree countSourceFileElements(ProjectTree sourceFile){
 	sourceFile@classesCount = classesCount;
 	return sourceFile;
 }
+
+
+//- -- -- - - --------- - -- -- - - --------- - -- -- - - --------- - -- -- - - ---------
+//- -- -- - - --------- - -- -- PRINT: COUNT UNITS, IMPORTS,..  - - --------- - -- -- - - --------- - -- -- - - ---------
+//- -- -- - - --------- - -- -- - - --------- - -- -- - - --------- - -- -- - - ---------
+public void printCountedTreeInfo(ProjectTree project){ //STEP 1
+	println("|------ ------ ------ - - - - --- -- - - - - - --- -- - -- - -- - - - - --- -- - -- - -- - - - - --- -- - -- - --|");
+	println("|	PRINTING number if sourc files, classes, imports, units, ..");
+	println("|------ ------ ------ - - - - --- -- - - - - - --- -- - -- - --|");
+	
+	top-down visit(project){
+		case ProjectTree r: root(set[ProjectTree] projects):{
+			println("|------ ------ ------ - - - - --- -- - - - - - --- -- - -- - --|");
+			println("|ROOT (projects:<size(projects)>)                    ");
+			println("|------ ------ ------ - - - - --- -- - - - - - --- -- - -- - --|");
+		}
+		case ProjectTree p : project(loc id,str name, set[ProjectTree] contents): {
+			println("|------ ------ ------ - - - - --- - --- -- - -- --- --|");
+			println("|  PROJECT <name> with <p@sourcesCount> source files   ");
+			println("|------ ------ ------ - - - - --- - --- -- - -- - ----|");
+			//println("Project location: <id> ");
+		}
+		
+		case ProjectTree f: folder(id,contents):{
+			println("|------ ------ ------ - - - - - - -- - - - -- - --|");
+			println("|    FOLDER <id.path> with <f@sourcesCount> file(s)");
+			println("|------ ------ ------ - - - - - - -- - -- - -- - -|");
+			printCountedSourceFiles(f);
+		}
+	}
+}
+
+private void printCountedSourceFiles(ProjectTree project){
+	visit(project){
+		case ProjectTree sf: sourceFile(loc id, Declaration declaration):{
+			println("|------ ------ ------ - - --|");
+			println("|       SOURCE FILE         |");
+			println("|------ ------ ------ - - --|");
+			println("File location: <id>");
+			println("Classes: <sf@classesCount>");
+			println("Units: <sf@unitsCount>");
+			println("Imports: <sf@importsCount>");
+		}
+	}
+}

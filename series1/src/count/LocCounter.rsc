@@ -127,7 +127,7 @@ private bool isOneLineComment(str line){
 	if( /^\s*\/\/.*$/s :=line){ // -> ws //comment ..
 		return true;
 	}
-	if( /^\s*\t*\/\*.*\*\/\s*\t*$/s :=line){ // -> /** .. */ ..
+	if( /^\s*\t*\/\*.*\*\/.*$/s :=line){ // -> /* .. */ ..
 		return true;
 	}
 	
@@ -154,6 +154,58 @@ private bool isCommentClosingTag(str line){
 	}
 	return false;
 }
+
+
+//- -- -- - - --------- - -- -- - - --------- - -- -- - - --------- - -- -- - - ---------
+//- -- -- - - --------- - -- -- PRINT: LOC - - --------- - -- -- - - --------- - -- -- - - ---------
+//- -- -- - - --------- - -- -- - - --------- - -- -- - - --------- - -- -- - - --------- 
+public void printLOCInfo(ProjectTree project){ // STEP 2
+	println("|------ ------ ------ - - - - --- -- - - - - - --- -- - -- - -- - - - - --- -- - -- - -- - - - - --- -- - -- - --|");
+	println("|	PRINTING Lines Of Code..");
+	println("|------ ------ ------ - - - - --- -- - - - - - --- -- - -- - --|");
+	
+	bottom-up visit(project){
+		case ProjectTree sf: sourceFile( id,  declaration):{
+			println("|------ ------ ------ - - --|");
+			println("|       SOURCE FILE         |");
+			println("|------ ------ ------ - - --|");
+			println("Source file: <id>");
+			println("LOC:<sf@LOC>");
+			println("Lines count:<sf@linesSet> ");
+			//println("units:<sf@unitsCount> ");
+			printDeclarationInfo(declaration);
+		}
+		
+	}
+}//-
+//---------------------CONNECTED---------------------// 
+private void printDeclarationInfo(Declaration decl){// 
+	visit(decl){
+		case Declaration m :\method(Type \return, str name, list[Declaration] parameters, list[Expression] exceptions, Statement impl):{
+			printMethodInfo(m);
+		}
+		
+		case Declaration m : \method(Type \return, str name, list[Declaration] parameters, list[Expression] exceptions):{
+			printMethodInfo(m);
+		}
+	}
+}//-
+//---------------------CONNECTED------------------// 
+private void printMethodInfo(Declaration method){//
+	println("|------ - - - --|");
+	println("|         METHOD|");
+	println("|------ - - - --|");
+	println("Method: <method@src> ");
+	println("MethLOC: <method@LOC> ");
+	println("MethLines:<sort(toList(method@linesSet))> "); //CAUTION, sort is slow !!!!!!!!!!!!!!
+}
+
+
+
+
+
+
+
 
 //public void ad(){
 ////|project://smallsql0.21_src/src/smallsql/database/Database.java|(10799,260,<309,1>,<313,2>)
