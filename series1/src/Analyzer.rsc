@@ -22,6 +22,7 @@ import util::Benchmark;
 
 public void analyzeProjects(){
 	loc smallProjectLocation = |project://smallsql0.21_src/|;
+	loc largeProjectLocation = |project://smallsql0.21_src/|;
 	
 	//MAKE TREE 
 	int starts = realTime();
@@ -36,17 +37,24 @@ public void analyzeProjects(){
 	println("completed counting project elements in: <stops-starts> ms");
 	 	
 	//LOC
-	starts  = realTime();
+	starts  = realTime(); // inline-comment text
+						// opening tag & inline comment 
+						// LOC pro folder, 
+						// packes & folder
+						// LOC pro project
+						// Duplication between projects,...only one interesting for multiple projects
+						// Units per Class 
+						// Inner classes on wrong class,...
 	ProjectTree locProject = countLoc(countedTree);
 	stops  = realTime();
 	println("completed counting LOCs in: <stops-starts> ms");
 	
 	//DUPLICATION
 	//ProjectTree line2HashMapTree  = makeLine2HashMaps(locProject);
-	checkDuplication(line2HashMapTree);
+	//checkDuplication(line2HashMapTree);
 	 
 	//PRINT
-	//printProjectInformation(locProject);
+	printProjectInformation(locProject);
 	
 }
 private void printProjectInformation(ProjectTree project){

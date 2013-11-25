@@ -58,7 +58,7 @@ private str hashLine(str line){
 	return md5HashFile(file);
 }
 
-private str normalizeLine(str line){
+private str normalizeLine(str line){ // allow single whitespaces 
 	//TODO: remove whitespaces (?), tabs, all to lower case
 	return "";
 }
