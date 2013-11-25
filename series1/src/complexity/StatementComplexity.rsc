@@ -6,6 +6,7 @@ import lang::java::m3::AST;
 import IO;
 	 
 public int get(Statement statement){
+
  int ret =0;
  
  switch(statement){
@@ -33,21 +34,21 @@ public int get(Statement statement){
    ret += complexity::ExpressionComplexity::get(expression);
   }
   
-  case \break():{
-   ret += 0;
-  }
+  //case \break():{
+  // ret += 0;
+  //}
   
-  case \break(str label):{
-   ret += 0;
-  }
+  //case \break(str label):{
+  // ret += 0;
+  //}
   
-  case \continue():{
-   ret += 0;
-  }
+  //case \continue():{
+  // ret += 0;
+  //}
   
-  case \continue(str label):{
-   ret += 0;
-  }
+  //case \continue(str label):{
+  // ret += 0;
+  //}
   
   case \do(Statement body, Expression condition):{
    ret +=1 ;
@@ -55,9 +56,9 @@ public int get(Statement statement){
    ret += complexity::ExpressionComplexity::get(condition);
   }
   
-  case \empty():{
-   ret += 0;
-  }
+  //case \empty():{
+  // ret += 0;
+  //}
   
   case \foreach(Declaration parameter, Expression collection, Statement body):{
    ret +=1;
@@ -108,13 +109,13 @@ public int get(Statement statement){
    }
   }
   
-  case \label(str name, Statement body):{
-   ret += 0;
-  }
+  //case \label(str name, Statement body):{
+  // ret += 0;
+  //}
   
-  case \return():{
-   ret += 0;
-  }
+  //case \return():{
+  // ret += 0;
+  //}
   
   case \return(Expression expression):{
    ret += complexity::ExpressionComplexity::get(expression);
@@ -200,5 +201,6 @@ public int get(Statement statement){
    }
   }
  }
+ 
  return ret;
  }
