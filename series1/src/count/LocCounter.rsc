@@ -1,152 +1,165 @@
 module count::LocCounter
 
-
-import TreeProcessor;
-import Analyzer;
-import count::UnitCounter;
 import Prelude;
-import util::Resources;
+import ProjectAnnotations;
 import IO;
-import List;
+import Node;
 import lang::java::m3::AST;
-import lang::java::m3::Core;
-import lang::java::m3::TypeHierarchy;
-import lang::java::m3::TypeSymbol;
-import lang::java::jdt::m3::Core;
-import analysis::m3::Registry;
+import List;
+import util::Resources;
 
-anno set[int] ProjectTree @linesSet;
-anno int ProjectTree @LOC;
 
-anno set[int] Declaration @linesSet;
-anno int Declaration @LOC;
-
-// Count LOC for each source file of project tree
-public ProjectTree countLoc(ProjectTree project){
-	println("\>counting LOC\<");
-	return bottom-up visit(project) { // bottom up needed?!
-		case ProjectTree sf: sourceFile(loc id, Declaration declaration):{
-				set[int] relevantLineNumbers = regexCountTree(id);
-				sf@linesSet = relevantLineNumbers;
-				sf@LOC = size(relevantLineNumbers);
-				sf.declaration = countUnitsLines(declaration);
-				insert sf; 
+public ProjectTree getLocCountedSourceFile(ProjectTree sourceFile){
+	return visit(sourceFile) { 
+		case ProjectTree sf: sourceFile(loc id, Declaration declaration):{ // source file
+			
+			list[str] relevantLines = getSourceLocInfo(sourceFile@fileLines);
+			sf@LOC = size(relevantLines);
+			sf@fileLines = relevantLines;
+			sf = visit(sf){
+				case Statement block : \block(list[Statement] statements):{ // block
+					block@LOC = size(getSpecificLineNrs(block@src,sourceFile@fileLines)); 
+					insert block;
+				}
+				case Declaration declaration: { // method, constructor, etc.
+					if("src" in getAnnotations(declaration)){  //check if declaration has annotation @src
+						declaration@LOC = size(getSpecificLineNrs(declaration@src,sourceFile@fileLines)); 
+						insert declaration;
+					}
+				}
+			}
+			insert sf;
 		}
 	}
 }
 
-private Declaration countUnitsLines(Declaration declaration){
-	return visit(declaration){
-		case Declaration m :\method(Type \return, str name, list[Declaration] parameters, list[Expression] exceptions, Statement impl):{
-			insert countMethodLOC(m);
-		}
-		case Declaration m : \method(Type \return, str name, list[Declaration] parameters, list[Expression] exceptions):{
-			insert countMethodLOC(m);
-		}
+public int getProjectLOC(list[ProjectTree] files){
+	int completeLoc = 0;
+	for(file <- files){
+		completeLoc += file@LOC;
 	}
+	return completeLoc;
 }
 
-private Declaration countMethodLOC(Declaration method){
-	list[str] fileLines = readFileLines(method@src);
-	set[int] relevantLineNumbers = filterOutUnrelevantLines(fileLines);
-	int methodBegin = method@src.begin.line;
-	set[int] correctedIndexLineNumbers = {(n+methodBegin)-1 | int n <-  relevantLineNumbers};
-	//by using readFileLines, we lose the actual line number. therefor add methodBeginLine number. 
-	method@linesSet = correctedIndexLineNumbers; 
-	method@LOC = size(correctedIndexLineNumbers);
-	return method;
+private list[str] getSourceLocInfo(list[str] fileLines){
+	list[str] lines =removeUnrelevantLines(fileLines);
+	return lines;
 }
 
-
-private set[int] regexCountTree(loc sourceFileLOC){
-	list[str] fileLines = readFileLines(sourceFileLOC); //read file and get each line represented as str in list
-	set[int] semanticalLines = filterOutUnrelevantLines(fileLines);  
-	return semanticalLines; 
-}
-
-private set[int] filterOutUnrelevantLines(list[str] lines){ //such as whitespace, comments ,..
+private list[str] removeUnrelevantLines(list[str] lines){
+	list[str] cleanedList = [];
 	bool isOpenComment = false; // true if multi-line comment tag was found. i.e.: if true, then is current line commented out
-	set[int] relevantLines = {};
 	int linePointer = 0;	
+	
 	for(line <- lines){
 		linePointer += 1;
-		if(isWhitespaceLine(line)){ //WHITESPACE  && ONE-LINE COMMENT
-			continue; //if empty line or one line comment, skip.
-		} 
-		if(isOneLineComment(line)){
+		
+		//if(/^\s*\t*}+$/s := line){ // } //TODO: maybe disable for "real" result
+		//	continue;
+		//}
+		
+		if(isWhitespaceLine(line) || isOneLineComment(line)){ //WHITESPACE  && ONE-LINE COMMENT
 			continue;
-		}
-		if(isRelevantLine(line) ){ // Line starts NOT with comment tag
-			if(!isOpenComment){
-				relevantLines += linePointer; //add current line number to relevant line numbers. Not whitespace, not comment or part of comment
-			} // do NOT continue, line could be relevant and have a comment tag somewhere
-		}
+		} 
+		
 		if(isCommentOpeningTag(line)){ // OPEN TAG -MULTI-LINE COMMENT 
 			isOpenComment = true;
 			continue;
 		} 
+		
 		if(isCommentClosingTag(line)){ // CLOSING TAG - MULTI-LINE COMMENT
 			isOpenComment = false; //reset tag indicator
 			continue;
 		}
-	}
-	return relevantLines;
-}
 		
+		if(!isOpenComment ){ // Line starts NOT with comment tag // && isRelevantLine(line)
+			//if(/^\s*\t*}+$/s := line){
+			//	lineNrs += -1;
+			//}
+			//else{
+			cleanedList += cleanUpLine(line);
+			//}
+			continue;
+		}
+	}
+	return cleanedList;
+}
 
-// if does not start with comment trigger AND if not in multi-line comment opeing before
-private bool isRelevantLine(str line){
-	if( /^\s*\t*\w+.*$/s :=line){ // ws, tab, word ...
-		return true;
+private list[int] getSpecificLineNrs(loc location,list[str] fileLines){ //TODO
+	list[int] lineNrs = computeRelevantLineNrs(slice(fileLines,location.begin.line-1,(location.end.line-location.begin.line)));
+	return lineNrs;
+}
+
+private  map[int,str] filterOutUnrelevantLines(list[str] lines){ //such as whitespace, comments ,..
+	list[int] relevantLineNrs = computeRelevantLineNrs(lines);
+	map[int,str] relevantNrs2Lines = (lineNr : cleanUpLine(lines[lineNr-1]) | int lineNr <-relevantLineNrs); // return value
+	return relevantNrs2Lines;
+}
+
+
+private list[int] computeRelevantLineNrs(list[str] lines){
+	bool isOpenComment = false; // true if multi-line comment tag was found. i.e.: if true, then is current line commented out
+	int linePointer = 0;	
+	list[int] lineNrs = [];
+	
+	for(line <- lines){
+		linePointer += 1;
+		
+		//if(/^\s*\t*}+$/s := line){ // } //TODO: maybe disable for "real" result
+		//	continue;
+		//}
+		
+		if(isWhitespaceLine(line) || isOneLineComment(line)){ //WHITESPACE  && ONE-LINE COMMENT
+			continue;
+		} 
+		
+		if(isCommentOpeningTag(line)){ // OPEN TAG -MULTI-LINE COMMENT 
+			isOpenComment = true;
+			continue;
+		} 
+		
+		if(isCommentClosingTag(line)){ // CLOSING TAG - MULTI-LINE COMMENT
+			isOpenComment = false; //reset tag indicator
+			continue;
+		}
+		
+		if(!isOpenComment ){ // Line starts NOT with comment tag // && isRelevantLine(line)
+			//if(/^\s*\t*}+$/s := line){
+			//	lineNrs += -1;
+			//}
+			//else{
+				lineNrs += linePointer;
+			//}
+			continue;
+		}
 	}
-	if( /^.*\*\/.*w+/s :=line){ // ws, tab, /* comment */ word 
-		return true;
-	}
-	if(/^\s*\t*}*\(*\)*\w+.*/s := line){
-		return true;
-	}
-	if(!isWhitespaceLine(line) && !isOneLineComment(line) && ! isCommentOpeningTag(line) && !isMultiCommentLine(line)){
-		return true;
-	}
-	return false;
+	return lineNrs;
 }
 
 private bool isWhitespaceLine(str line){
-	if( /^\s*$/s :=line){ // ws
-		return true;
-	}
-	return false;
+	return ( /^\s*$/s :=line); // ws
 }
 
 private bool isOneLineComment(str line){
-	if( /^\s*\t*\/\/.*$/s :=line){ // -> ws //comment ..
-		return true;
-	}
-	if( /^\s*\t*\/\*.*\*\/\s*\t*$/s :=line){ // -> /* .. */ 
-		return true;
-	}
-	return false;	
+	return ( /^\s*\t*\/\/.*/s :=line) || ( /^\s*\t*\/\*.*\*\/\s*\t*$/s :=line);   
 }
 
 private bool isCommentOpeningTag(str line){
-	 if( /^\s*\t*\/\*.*$/s :=line){ // ws, tab, /* ..
-		return true;
-	}
-	return false;
+	return ( /^\s*\t*\/\*.*$/s :=line); 
 }
 
 private bool isMultiCommentLine(str line){
-	 if(/^\s*\*.*$/s :=line){ // ws * ...
-		return true;
-	}
-	return false;
+	return (/^\s*\*.*$/s :=line); 
 }
 
 private bool isCommentClosingTag(str line){
-	if( /^.*\*\/\s*\t*$/s :=line){
-		return true;
-	}
-	return false;
+	return ( /^.*\*\/\s*\t*\W*$/s :=line);
+}
+
+private str cleanUpLine(str line){  // remove whitespaces and tabs
+	str noSpacesLine = replaceAll(line," ","");
+	str noTabsLine = replaceAll(noSpacesLine,"	","");
+	return noTabsLine;
 }
 
 //- -- -- - - --------- - -- -- - - --------- - -- -- - - --------- - -- -- - - ---------
@@ -164,7 +177,7 @@ public void printLOCInfo(ProjectTree project){ // STEP 2
 			println("|------ ------ ------ - - --|");
 			println("Source file: <id>");
 			println("LOC:<sf@LOC>");
-			println("Lines count:<sf@linesSet> ");
+			println("Lines count:<sf@linesList> ");
 			printDeclarationInfo(declaration);
 		}
 		
@@ -175,6 +188,7 @@ private void printDeclarationInfo(Declaration decl){//
 	visit(decl){
 		case Declaration m :\method(Type \return, str name, list[Declaration] parameters, list[Expression] exceptions, Statement impl):{
 			printMethodInfo(m);
+			printStatementInfo(impl);
 		}
 		
 		case Declaration m : \method(Type \return, str name, list[Declaration] parameters, list[Expression] exceptions):{
@@ -189,5 +203,14 @@ private void printMethodInfo(Declaration method){//
 	println("|------ - - - --|");
 	println("Method: <method@src> ");
 	println("MethLOC: <method@LOC> ");
-	println("MethLines:<sort(toList(method@linesSet))> "); //CAUTION, sort is slow !!!!!!!!!!!!!!
+	println("MethLines:<method@linesList> "); //CAUTION, sort is slow !!!!!!!!!!!!!!
+}//-
+//---------------------CONNECTED------------------// 
+private void printStatementInfo(Statement block){//
+	println("|- - - - --|");
+	println("|     Block|");
+	println("|- - - - --|");
+	println("Block: <block@src> ");
+	println("BlockLOC: <block@LOC> ");
+	println("BlockLines:<block@linesList> "); //CAUTION, sort is slow !!!!!!!!!!!!!!
 }
