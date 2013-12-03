@@ -4,7 +4,7 @@ import IO;
 import util::Math;
 import lang::java::m3::AST;
 import count::LocCounter;
-import TreeProcessor;
+import ProjectAnnotations;
 import complexity::ComplexityRiskLevels;
 
 anno int Declaration @ lengthRiskLevel;
@@ -161,16 +161,17 @@ private int printUnitLocRating(mediumPerc, highPerc, veryHighPerc){
 	return output;
 }
 
-public int printAverageUnitLocRating(ProjectTree project,onePerc,onePercM){
+public int printAverageUnitLocRating(ProjectTree project){
+	onePerc = (project@LOC) / 100.00;
 	project = getAvgUnitLoc(project);
-	lowPerc = countMethodsWithLocRiskLevel(project,RISK_LEVEL_LOW, onePerc,onePercM, "low");
-	mediumPerc = countMethodsWithLocRiskLevel(project,RISK_LEVEL_MEDIUM, onePerc,onePercM, "medium");
-	highPerc = countMethodsWithLocRiskLevel(project,RISK_LEVEL_HIGH, onePerc,onePercM, "high");
-	veryHighPerc = countMethodsWithLocRiskLevel(project,RISK_LEVEL_VERY_HIGH, onePerc,onePercM, "very high");
+	lowPerc = countMethodsWithLocRiskLevel(project,RISK_LEVEL_LOW, onePerc, "low");
+	mediumPerc = countMethodsWithLocRiskLevel(project,RISK_LEVEL_MEDIUM, onePerc, "medium");
+	highPerc = countMethodsWithLocRiskLevel(project,RISK_LEVEL_HIGH, onePerc, "high");
+	veryHighPerc = countMethodsWithLocRiskLevel(project,RISK_LEVEL_VERY_HIGH, onePerc, "very high");
 	return printUnitLocRating(mediumPerc,highPerc,veryHighPerc);
 }
 
-private real countMethodsWithLocRiskLevel(project, level,onePerc,onePercM, levelStr){
+private real countMethodsWithLocRiskLevel(project, level,onePerc, levelStr){
 	len = 0;
 	count = 0;
 	visit(project){
@@ -182,8 +183,7 @@ private real countMethodsWithLocRiskLevel(project, level,onePerc,onePercM, level
 	  }
 	}
 	perc = len/onePerc;
-	percM = len/onePercM;
-	println("<count> methods with a length risk level of <levelStr> have a total length of <len> (<perc>% of total LOC) (<percM>% of method LOC)");
+	println("<count> methods with a length risk level of <levelStr> have a total length of <len> (<perc>% of total LOC)");
 	return toReal(perc);
 }
 
