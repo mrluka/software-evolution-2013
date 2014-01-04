@@ -13,7 +13,19 @@ public ProjectTree countSourceFileElements(ProjectTree sourceFile){
 	int methCount =0;// method / unit count per source file
 	int importCount =0; //imports count per source file
 	int classesCount = 0; // classes count per source file
+
+	//lrel[Declaration file,list[Declaration]imports,list[Declaration] types] fileEntities = [<sf,[fileImports],types> | Declaration sf <- sourceFile, fileImports <-sf.imports,types <- sf.types,\compilationUnit(Declaration package, list[Declaration] imports, list[Declaration] types):=sf];
+	list[Declaration] imports = [ imp | Declaration sf <- sourceFile , \compilationUnit :=sf, imp <- sf.imports];
+	//int importsCount = size(imports);
 	
+	list[Declaration] types = [ typ | Declaration sf <- sourceFile , \compilationUnit :=sf, typ <- sf.types]; //,bprintln(typ)
+	//lrel[list[Declaration] methods,list[Declaration] constructors,list[Declaration] fields] 
+	list[Declaration] methods =  [m | meth <-types, Declaration m: /method := meth,bprintln(m)];
+	
+	//entities= [ method,constructor,field | Declaration typ <- types , \class :=typ, body<- typ.body,method <- body,/method := method, constructor <-body,/constructor := constructor, field <- body, /field :=field];
+	//list[Declaration] methods = [ meth | Declaration meth <- types , \class :=meth && bprintln(meth)];
+		println("<size(methods)>");
+
 	visit(sourceFile){ //visit each source files method(unit), import and class. 
 		case m:  \method( \return,  name, parameters,exceptions, Statement stat) : { //METHOD(unit)
 			methCount+=1;
@@ -88,54 +100,3 @@ private void printCountedSourceFiles(ProjectTree project){
 		}
 	}
 }
-
-
-
-
-
-
-
-
-//TreeAnalyzer uses a project tree for further analysis. 
-//First step: is gathering information such as: units per file / folder, locode per unit / class file, etc.
-
-
-//public ProjectTree countProjectElements(ProjectTree project){
-//	println("\>Start: Counting project\'s physical data\<");
-//	return countContent(project);
-//}
-
-//private ProjectTree countContent(ProjectTree projectTree){
-//	int folderUnitsCount =0, folderClassesCount = 0, totalSFCount =0;	
-//	//return bottom-up visit(projectTree){
-//	
-//		//case ProjectTree r : root(set[ProjectTree] projects):{ // ROOT
-//		//	r@classesCount = totalSFCount;
-//		//	insert r;
-//		//}
-//		//
-//		//case ProjectTree p : project(loc id,str name, set[ProjectTree] contents):{ // PROJECT
-//		//	p@sourcesCount = totalSFCount;
-//		//	insert p;
-//		//}
-//		//
-//		//case ProjectTree f : folder(id, contents) :{ //FOLDER: sourcesCount, unitsCount, classesCount
-//		//	set[ProjectTree] sourceFiles = {};  
-//		//	for(sFile <- contents){ //For each source file in folder
-//		//		ProjectTree countedSourceFile = countSourceFileElements(sFile); 
-//		//		sourceFiles += countedSourceFile;
-//		//		folderUnitsCount += countedSourceFile@unitsCount;
-//		//	}
-//		//	int folderSFCount = size(id.ls); 
-//		//	totalSFCount += folderSFCount;
-//		//	f@sourcesCount=folderSFCount; // source files per folder
-//		//	f@unitsCount = folderUnitsCount; // unit count per folder
-//		//	f@classesCount = folderClassesCount; // classes count per folder
-//		//	f.contents = sourceFiles;			
-//		//	folderUnitsCount = 0;
-//		//	folderClassesCount = 0;
-//		//	insert f;
-//		//}
-//	//}
-//}
-

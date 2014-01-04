@@ -1,7 +1,8 @@
-module sig::Rating
+module sig::rating
 
 import IO;
 import util::Math;
+import util::Resources;
 import lang::java::m3::AST;
 import count::LocCounter;
 import ProjectAnnotations;
@@ -161,7 +162,7 @@ private int printUnitLocRating(mediumPerc, highPerc, veryHighPerc){
 	return output;
 }
 
-public int printAverageUnitLocRating(ProjectTree project){
+public int printAverageUnitLocRating(Resource project){
 	onePerc = (project@LOC) / 100.00;
 	project = getAvgUnitLoc(project);
 	lowPerc = countMethodsWithLocRiskLevel(project,RISK_LEVEL_LOW, onePerc, "low");
@@ -202,7 +203,7 @@ private int getLocRiskLevel(length){
 }
 
 
-private ProjectTree getAvgUnitLoc(ProjectTree project){
+private Resource getAvgUnitLoc(Resource project){
 	return visit(project){
 	  case m : \method(Type \return, str mname, list[Declaration] parameters, list[Expression] exceptions, Statement impl) : {
 	    m@lengthRiskLevel = getLocRiskLevel(m@LOC);

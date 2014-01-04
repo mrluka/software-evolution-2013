@@ -1,95 +1,103 @@
 module TreeProcessor
 
-import count::LocCounter; 
-import count::UnitCounter; 
+
+//import count::UnitCounter; 
 import ProjectAnnotations;
 import util::Resources;
 import IO;
 import Set;
-import ListRelation;
+import List;
+import Relation;
 import lang::java::m3::AST;
+import lang::java::jdt::m3::Core;
+import vis::Figure;
+import vis::Render;
+import complexity::ComplexityAnalyzer;
+import complexity::StatementComplexity;
+//import complexity::ExpressionComplexity;
+import complexity::ComplexityRiskLevels;
+//import complexity::ComplexityVisualizer;
+//import sig::Rating;
+import count::LocCounter; 
 
-public ProjectTree makeProjectTree(loc projectLoc){
-	println("\>Start: Make Tree\<");
-	Resource projectResource = getProject(projectLoc);
-	return makeTree(projectResource);
-}    
-           
 
-private ProjectTree makeTree(Resource projectResource){
-	ProjectTree projectTree; // return value
-	int c = 0; // for testing stuff
-	int folderUnitsCount =0, folderClassesCount = 0, totalSFCount =0,folderSFCount = 0;
-	set[ProjectTree] folders = {};
-	list[ProjectTree] totalSourceFileList = [];
-	
-	bottom-up visit(projectResource){
-
-		case ProjectTree r : root(set[ProjectTree] projects):{ // ROOT
-			println("root");
-			r@classesCount = totalSFCount;
-			insert r;
+public Resource makeTree(loc projectLocation){
+	Resource projectResource = getProject(projectLocation);
+	int folderSourcesCount = 0, totalSourcesCount= 0, folderClassesCount= 0, totalClassesCount = 0, totalLOC =0 ;
+	list[Resource] allSourceFiles = []; 
+	return bottom-up visit(projectResource){ 
+		case  p : project(loc id, set[Resource] contents):{ 
+			set[Resource] relevantItems = {items |  items <- contents, isRelevantItem(items.id)};
+			p.contents	 = relevantItems;
+			p@sourcesCount = totalSourcesCount;
+			p@classesCount = totalClassesCount;
+			p@LOC = totalLOC;
+			//project@sourceFileList = allSourceFiles;
+			int duplicatedLinesCount =  searchDuplication(allSourceFiles);
+			p@duplicationLineCount = duplicatedLinesCount;
+			insert p; 
 		}
-		
-		case ProjectTree p : project(loc id,str name, set[ProjectTree] contents):{ // PROJECT
-			println("project");
-			projectTree@sourceFileList = totalSourceFileList;
-			p@sourcesCount = totalSFCount;
-			
-			insert p;
-		}
-		
 		case  f: folder(loc folderLoc, set[Resource] contents) : {
-			if(!isTestFolder(folderLoc)){ 
-				set[ProjectTree] sourceFiles = {};
-				list[loc] folderContent = folderLoc.ls;
-				bool hasSourceFiles = false;
-				for(l <- folderContent){
-					if(isSourceFile(l) && !isTestFile(l)){
-						Declaration declaration = createAstFromFile(l,true);
-						ProjectTree sFile = sourceFile(declaration@src, declaration); // use declaration@src because fileLoc does NOT contain begin.line, end.line,etc
-						list[str] afileLines = readFileLines(declaration@src);
-						ProjectTree countedSourceFile = countSourceFileElements(sFile); // In UNIT COUNTER
-						countedSourceFile@fileLines = afileLines;
-						ProjectTree locFile = getLocCountedSourceFile(countedSourceFile); // IN LOC COUNTER
-						sourceFiles += locFile;
-						hasSourceFiles = true;
-						folderSFCount +=1;
-					}
-				}
-				
-				if(hasSourceFiles){
-					ProjectTree newFolder = folder(folderLoc, sourceFiles);
-					totalSourceFileList += toList(sourceFiles);
-					totalSFCount += folderSFCount;
-					newFolder@sourcesCount=folderSFCount; // source files per folder
-					newFolder@unitsCount = folderUnitsCount; // unit count per folder
-					newFolder@classesCount = folderClassesCount; // classes count per folder
-					newFolder.contents = sourceFiles;			
-					folderUnitsCount = 0;
-					folderClassesCount = 0;
-					folderSFCount = 0;
-					folders += newFolder;
-				}
+			if(!isTestFolder(folderLoc)){
+				set[Resource] relevantItems = {items |  items <- contents, isRelevantItem(items.id)};
+				f.contents = relevantItems;
+				f@sourcesCount= folderSourcesCount;
+				f@classesCount= folderClassesCount;
+				folderSourcesCount =0;
+				folderClassesCount =0;
+				insert f;
+			}  
+		}
+		case f: file(_)  : { 
+			if(isSourceFile(f.id) && !isTestFile(f.id)){ 
+				Declaration declaration = createAstFromFile(f.id,true);
+				f@declaration  = declaration;
+				units = [b | u <- f@declaration.types, b <- u.body, \method( \return,  name, parameters,exceptions, Statement stat) := b || \method( \return,  name, parameters,exceptions) := b ];
+				f@unitsCount = size(units); // unit count (per file)
+				f@importsCount = size(f@declaration.imports);  // import count
+				f@classesCount = size(f@declaration.types); //classes count
+				f@fileLines =readFileLines(f.id);
+				f = getLocCountedSourceFile(f); 
+				totalLOC += f@LOC;
+				folderSourcesCount += 1;
+				folderClassesCount += f@classesCount;
+				totalSourcesCount += 1;
+				totalClassesCount += f@classesCount;
+				allSourceFiles += f;
+				insert f; 
 			}
 		}
-	}
-	
-	projectTree = project(projectResource.id,projectResource.id.authority, folders); //init return value
-	projectTree@sourceFileList = totalSourceFileList;
-	int projectLOC =  getProjectLOC(totalSourceFileList);
-	
-	ProjectTree root = root({projectTree[@LOC=projectLOC][@sourceFileList=totalSourceFileList]});
-	return root;
+	};
 }
 
 
+
+
+private bool isRelevantItem(loc itemLocation){
+	return isSourceFile(itemLocation) && !isTestFolder(itemLocation);
+}
+
 private bool isSourceFile(loc file){
-	return /.*java/ := file.extension;
+	return (/.*java/ := file.extension || file.extension == "") && !(/^\..*/ := file.extension);
 }
 
 private bool isTestFolder(loc folder){
-	return /^.*Test.*/ := folder.path;
+	if(/^.*Test.*/ := folder.path || /^.*junit.*/ := folder.path || /^.*lib.*/ := folder.path){ //test folder	
+		return true;
+	}
+	if( /^.*\/bin.*/ := folder.path){ //bin folder
+		return true;
+	}
+	if( /^\..*/ := folder.file){ // hiden folder
+		return true;
+	}
+	if( /^\.txt/ := folder.file){ // txt file 
+		return true;
+	}
+	if( /^\.lib/ := folder.file){ // lib file
+		return true;
+	}
+	return  false;
 }
 
 private bool isTestFile(loc file){
@@ -97,28 +105,56 @@ private bool isTestFile(loc file){
 }
 
 
+public void printToFile(value toPrint,bool saveToFile){
+	if(saveToFile){
+		iprintToFile(|file:///Volumes/Big/Uni/Master02/Software_Evolution/workspace/series1/output.txt|,toPrint);
+	}else{
+		iprintln(toPrint);
+	}
+}
 
 
-
-
-//
-//case ProjectTree f : folder(id, contents) :{ //FOLDER: sourcesCount, unitsCount, classesCount
-//			set[ProjectTree] sourceFiles = {};  
-//			for(sFile <- contents){ //For each source file in folder
-//				ProjectTree countedSourceFile = countSourceFileElements(sFile); 
-//				sourceFiles += countedSourceFile;
-//				folderUnitsCount += countedSourceFile@unitsCount;
-//			}
-//			int folderSFCount = size(id.ls); 
-//			totalSFCount += folderSFCount;
-//			f@sourcesCount=folderSFCount; // source files per folder
-//			f@unitsCount = folderUnitsCount; // unit count per folder
-//			f@classesCount = folderClassesCount; // classes count per folder
-//			f.contents = sourceFiles;			
-//			folderUnitsCount = 0;
-//			folderClassesCount = 0;
-//			insert f;
-//		}
-		
-		
-		
+private int searchDuplication(list[Resource] sourceFiles){
+	list[str] allLines = [];
+	int currentIndex = 0;
+	int comboCount = 0;
+	list[int] comboLineNrs = [];
+	list[str] comboLines = [];
+	list[str] comboLinesTemp = [];
+	lrel[int,str] nr2LineRel ;
+	int lineCounter = 0;
+	int duplicatedLinesCount = 0;
+	str lastLine = "";
+	set[str] allLinesSet = {};
+	int lastSetSize = -1;
+	int setSize = -1;
+	for(file <- sourceFiles){
+		list[str] fileLines = file@fileLines;
+		lineLoops = size(fileLines);
+		for(line <-fileLines){
+			lineCounter += 1;
+			lastSetSize = size(allLinesSet);
+			allLinesSet += line;
+			setSize = size(allLinesSet);
+			//println("combo: <comboCount> current: <setSize> last: <lastSetSize> ");
+			if(lastSetSize == setSize){
+				comboCount += 1;
+				if((lineCounter ==lineLoops) && comboCount>=6){
+					duplicatedLinesCount += comboCount;
+					comboLines += comboLinesTemp;
+					//println("FAMBO: <comboCount>");
+				}
+			}else{
+				if(comboCount >= 6){
+				duplicatedLinesCount += comboCount;
+					//println("COMBO: <comboCount>");
+				}
+				comboCount = 0;
+			}
+		}
+		lineCounter = 0;
+		comboCount = 0;
+	
+	}
+	return duplicatedLinesCount;
+}
