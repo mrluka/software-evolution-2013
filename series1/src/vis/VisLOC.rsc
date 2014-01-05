@@ -18,7 +18,7 @@ import util::Editors;
 // 	visualizeItLoc(project);
 //}
 
-public void visualizeItLoc(Resource project){
+public Figure visualizeItLoc(Resource project){
  int totalLoc = project@LOC;
  int onePerc = totalLoc / 100;
  println("vis total loc: <totalLoc>");
@@ -39,7 +39,7 @@ public void visualizeItLoc(Resource project){
  		}
  	}
  }
- render(hcat(classOutlines, [gap(5),ialign(0.0)])); //, justify(false)
+ return hcat(classOutlines, [gap(5),ialign(0.0)]); //, justify(false)
 }
 
 private Figure createClassLOCOutline(loc fileLocation,int classLOC, int onePerc,list[int] duplicatedLines){
