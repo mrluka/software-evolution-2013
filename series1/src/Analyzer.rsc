@@ -8,14 +8,15 @@ import util::Resources;
 import complexity::ComplexityAnalyzer;
 import Prelude;
 import sig::rating;
-
+import vis::VisLOC;
 
 
 //Analyzer is the starting point. It uses TreeProcessor to get the project tree, which is then used for further analysis with the help of TreeAnalyzer
 public void analyzeProjects(){
 	loc smallProjectLocation = |project://smallsql0.21_src/|;
-	loc largeProjectLocation = |project://hsqldb-2.3.1/|;
 	loc smallPreparedProjectLocation = |project://smallsql_prepared/|;
+	loc largeProjectLocation = |project://hsqldb-2.3.1/|;
+	
 	
 	//MAKE TREE 
 	int starts = realTime();
@@ -24,15 +25,16 @@ public void analyzeProjects(){
 	println("Finished: Make Tree in: <stops-starts> ms");
 	println("TOTAL loc: <project@LOC>");
 	
-	//////COMPLEXITY
-	starts  = realTime();
-	project =  getComplexityTree(project);
-	stops = realTime();
-	println("completed complexity analysis in: <stops-starts> ms");
-	starts  = realTime();
-	rating_complexity = printRiskLevelOverview(project);
-	stops = realTime();
-	println("comleted risk level analysis in: <stops-starts> ms");
+	visualizeItLoc(project);
+	////////COMPLEXITY
+	//starts  = realTime();
+	//project =  getComplexityTree(project);
+	//stops = realTime();
+	//println("completed complexity analysis in: <stops-starts> ms");
+	//starts  = realTime();
+	//rating_complexity = printRiskLevelOverview(project);
+	//stops = realTime();
+	//println("comleted risk level analysis in: <stops-starts> ms");
 	
 	// ---------------OLD  ---------------  --------------- --------------- --------------- 
 	//MAKE TREE 

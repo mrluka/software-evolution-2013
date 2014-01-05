@@ -25,26 +25,13 @@ anno list[str] Resource @fileLines; // SourceFile
 
 anno int Resource @LOC;        
 anno int Resource @duplicationLineCount;
-        
-        //-----
-// // UNIT COUNT
-//anno int ProjectTree @sourcesCount;
-//anno int ProjectTree @classesCount;
-//anno int ProjectTree @unitsCount;
-//anno int ProjectTree @importsCount;
-//
-//// LOC 
-//anno list[ProjectTree] ProjectTree @sourceFileList;
-//anno map[int,str] ProjectTree @nrs2lines; // SourceFile
-//anno list[int] ProjectTree @linesList; // SourceFile
-//anno list[str] ProjectTree @fileLines; // SourceFile
-//
-//anno int ProjectTree @LOC;
+
+anno list[int] Resource @duplicatedLines; // Source File
+anno map[loc file,list[int] lines] Resource @duplicatedLinesMap; // Project
+
 anno int Declaration @LOC;
 anno int Statement @LOC;
 
-//DUPLICATION
-//anno int ProjectTree @duplicationLineCount;
 
 
 

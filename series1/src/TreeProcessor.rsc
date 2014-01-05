@@ -20,11 +20,24 @@ import complexity::ComplexityRiskLevels;
 //import sig::Rating;
 import count::LocCounter; 
 
-
+//duplicatedLines duplicatedLinesMap
 public Resource makeTree(loc projectLocation){
 	Resource projectResource = getProject(projectLocation);
 	int folderSourcesCount = 0, totalSourcesCount= 0, folderClassesCount= 0, totalClassesCount = 0, totalLOC =0 ;
 	list[Resource] allSourceFiles = []; 
+	
+	//DUPLICATION
+	int comboCount = 0;
+	list[str] comboLines = [];
+	list[str] comboLinesTemp = [];
+	int lineCounter = 0;
+	int duplicatedLinesCount = 0;
+	set[str] allLinesSet = {};
+	int lastSetSize = -1;
+	int setSize = -1;
+	map[loc file,list[int]lines] file2LinesMap = ();	// ! 
+	list[int] tempFileLines = []; // ! 
+	// -----------	
 	return bottom-up visit(projectResource){ 
 		case  p : project(loc id, set[Resource] contents):{ 
 			set[Resource] relevantItems = {items |  items <- contents, isRelevantItem(items.id)};
@@ -32,9 +45,11 @@ public Resource makeTree(loc projectLocation){
 			p@sourcesCount = totalSourcesCount;
 			p@classesCount = totalClassesCount;
 			p@LOC = totalLOC;
-			//project@sourceFileList = allSourceFiles;
-			int duplicatedLinesCount =  searchDuplication(allSourceFiles);
+			//int duplicatedLinesCount =  searchDuplication(allSourceFiles);
 			p@duplicationLineCount = duplicatedLinesCount;
+			p@duplicatedLinesMap = file2LinesMap;
+			//println(duplicatedLinesCount);
+			//iprint(file2LinesMap);
 			insert p; 
 		}
 		case  f: folder(loc folderLoc, set[Resource] contents) : {
@@ -64,12 +79,47 @@ public Resource makeTree(loc projectLocation){
 				totalSourcesCount += 1;
 				totalClassesCount += f@classesCount;
 				allSourceFiles += f;
+				
+				//DUPLICATION
+				file2LinesMap[f.id] = []; // ! 
+				list[str] fileLines = f@fileLines;
+				lineLoops = size(fileLines);
+				
+				for(line <-f@fileLines){
+					lineCounter += 1;
+					lastSetSize = size(allLinesSet);
+					allLinesSet += line;
+					setSize = size(allLinesSet);
+					if(lastSetSize == setSize){
+						comboCount += 1;
+						tempFileLines += lineCounter; // ! 
+						if((lineCounter ==lineLoops) && comboCount>=6){
+							duplicatedLinesCount += comboCount;
+							comboLines += comboLinesTemp;
+							file2LinesMap[f.id] += tempFileLines; // !
+							tempFileLines = []; // !
+							comboCount = 0;
+							//println(file2LinesMap[f.id]);// !
+						}
+					}else{
+						if(comboCount >= 6){
+							duplicatedLinesCount += comboCount;
+							file2LinesMap[f.id] += tempFileLines; // !
+							//println(file2LinesMap[f.id]); // !
+						}
+						tempFileLines = []; // !
+						comboCount = 0;
+					}
+				}
+				f@duplicatedLines = file2LinesMap[f.id];
+				tempFileLines = []; // !
+				lineCounter = 0;
+				comboCount = 0;
 				insert f; 
 			}
 		}
 	};
 }
-
 
 
 
@@ -114,47 +164,57 @@ public void printToFile(value toPrint,bool saveToFile){
 }
 
 
-private int searchDuplication(list[Resource] sourceFiles){
-	list[str] allLines = [];
-	int currentIndex = 0;
-	int comboCount = 0;
-	list[int] comboLineNrs = [];
-	list[str] comboLines = [];
-	list[str] comboLinesTemp = [];
-	lrel[int,str] nr2LineRel ;
-	int lineCounter = 0;
-	int duplicatedLinesCount = 0;
-	str lastLine = "";
-	set[str] allLinesSet = {};
-	int lastSetSize = -1;
-	int setSize = -1;
-	for(file <- sourceFiles){
-		list[str] fileLines = file@fileLines;
-		lineLoops = size(fileLines);
-		for(line <-fileLines){
-			lineCounter += 1;
-			lastSetSize = size(allLinesSet);
-			allLinesSet += line;
-			setSize = size(allLinesSet);
-			//println("combo: <comboCount> current: <setSize> last: <lastSetSize> ");
-			if(lastSetSize == setSize){
-				comboCount += 1;
-				if((lineCounter ==lineLoops) && comboCount>=6){
-					duplicatedLinesCount += comboCount;
-					comboLines += comboLinesTemp;
-					//println("FAMBO: <comboCount>");
-				}
-			}else{
-				if(comboCount >= 6){
-				duplicatedLinesCount += comboCount;
-					//println("COMBO: <comboCount>");
-				}
-				comboCount = 0;
-			}
-		}
-		lineCounter = 0;
-		comboCount = 0;
+//private int searchDuplication(list[Resource] sourceFiles){
+	//int comboCount = 0;
+	//list[str] comboLines = [];
+	//list[str] comboLinesTemp = [];
+	//int lineCounter = 0;
+	//int duplicatedLinesCount = 0;
+	//set[str] allLinesSet = {};
+	//int lastSetSize = -1;
+	//int setSize = -1;
+	//
+	//map[str file,list[int]lines] file2LinesMap = ();	// ! 
+	//list[int] tempFileLines = []; // ! 
 	
-	}
-	return duplicatedLinesCount;
-}
+	//for(file <- sourceFiles){ // PER SOURCE FILE 
+		//file2LinesMap["fileLocation"] = []; // ! 
+		//list[str] fileLines = file@fileLines;
+		//lineLoops = size(fileLines);
+		
+		
+		//for(line <-fileLines){
+		//	lineCounter += 1;
+		//	lastSetSize = size(allLinesSet);
+		//	allLinesSet += line;
+		//	setSize = size(allLinesSet);
+		//	if(lastSetSize == setSize){
+		//		comboCount += 1;
+		//		tempFileLines += lineCounter; // ! 
+		//		if((lineCounter ==lineLoops) && comboCount>=6){
+		//			duplicatedLinesCount += comboCount;
+		//			comboLines += comboLinesTemp;
+		//			file2LinesMap["fileLocation"] += tempFileLines; // !
+		//			tempFileLines = []; // !
+		//			comboCount = 0;
+		//			println(file2LinesMap["fileLocation"]);// !
+		//		}
+		//	}else{
+		//		if(comboCount >= 6){
+		//			duplicatedLinesCount += comboCount;
+		//			file2LinesMap["fileLocation"] += tempFileLines; // !
+		//			println(file2LinesMap["fileLocation"]); // !
+		//		}
+		//		tempFileLines = []; // !
+		//		comboCount = 0;
+		//	}
+		//}
+		
+		
+		//tempFileLines = []; // !
+		//lineCounter = 0;
+		//comboCount = 0;
+	
+	//}
+	//return duplicatedLinesCount;
+//}
