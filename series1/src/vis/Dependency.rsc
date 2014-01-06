@@ -8,6 +8,7 @@ import vis::Render;
 import vis::Figure;
 import TreeProcessor;
 import ProjectAnnotations;
+import vis::KeySym;
 
 data package = pckg(str name);
 anno set[str] package @ dependencies;
@@ -22,7 +23,7 @@ public Figure visualizeItDep(Resource project){
 	set[package] packages = {};
 	visit(project){
 		case f : file(id):{
-			Declaration declaration = createAstFromFile(id,true);
+			Declaration declaration = f@declaration; //createAstFromFile(id,true);
 			str packageName = getPackageName(declaration);
 			if(packageName != ""){
 				packg = pckg(packageName);
@@ -45,7 +46,8 @@ private Figure visualize(set[package] packages){
 		nodes += box(text(name.name), id(name.name));
 		println("found package <name.name>");
 		for(dependency <- name@dependencies){
-			nodes += box(text(dependency), id(dependency));
+			nodes += box(text(dependency), id(dependency)); // 
+		
 			edges += edge(name.name, dependency);
 			println("depends on <dependency>");
 		}

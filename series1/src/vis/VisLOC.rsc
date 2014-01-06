@@ -48,14 +48,25 @@ private Figure createClassLOCOutline(loc fileLocation,int classLOC, int onePerc,
 	list[LineDecoration] hiLines = [];
 	if(duplicatedLinesCount >= 6){
 		int duplPer = duplicatedLinesCount / onePerc;
-		hiLines = [highlight(l,"<l>a") | l <- duplicatedLines];
+		hiLines = [highlight(l,"Duplicated line") | l <- duplicatedLines];
 	}
  	return outline(hiLines, classSize, [size(10,classSize),onMouseDown(bool (int butnr, map[KeyModifier,bool] modifiers) {
-		edit(fileLocation);
+		edit(fileLocation,hiLines);
 		return true;
 	})]);
 	
-	// DYNAMIC SIZE TRY, okay, but duplication not done :) 
+	
+}
+
+public Figure stairs(int nr,int liOC){
+	props = (nr == 0) ? [] : [mouseOver(stairs(nr-1, liOC))];
+	return box(text("DLOC:",fontColor("white"),( nr %2 == 0 )?  fontSize(20) : fontSize(1)),props + 
+        [ ( nr %2 == 0 )?  left() : right(),
+          resizable(false),size(10),fillColor("black"),valign(0.25) ]);
+}
+ 	
+ 	
+ 	// DYNAMIC SIZE TRY, okay, but duplication not done :) 
 	//int classPer = classLOC/onePerc;
 	//int classSize = onePerc * classPer;
 	//int duplicatedLinesCount = size(duplicatedLines);
@@ -70,6 +81,4 @@ private Figure createClassLOCOutline(loc fileLocation,int classLOC, int onePerc,
 	//	edit(fileLocation);
 	//	return true;
 	//})]);
-}
- 	
- 	
+	

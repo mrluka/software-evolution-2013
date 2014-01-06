@@ -28,21 +28,43 @@ retTemp = [];
 	visit(decl){
 	 case c : \class(str name, list[Type] extends, list[Type] implements, list[Declaration] body):{
 	 int items = size(retTemp);
-	 //println("class 1 <items>");
-	 	ret += hcat(retTemp,size(items*5,2));
-	 }
-	 // case c : \class(list[Declaration] body):{
-	 ////println("class 2");
-	 //	ret += hcat(retTemp,fillColor("red"),gap(4),size(items*10,items*10));
-	 //}
+	 col = false;
+	 b= box(hcat(retTemp,size(items*7,2)),fillColor(Color(){return col ? color("darkGray") : color("black");}),onMouseEnter(void () {  col=true; }), onMouseExit(void () { col=false;}),onMouseDown(bool (int butnr, map[KeyModifier,bool] modifiers){
+	edit(c@src); return true;})); // ,getRiskText(m@riskLevel) ,grow(1.1)
+ 	ret += b;
+	 } // +stairs(1,"<c@src.file>",c@LOC)
+	
 	 case m: \method(Type \return, str mname, list[Declaration] parameters, list[Expression] exceptions, Statement impl) : {
 	   retTemp += box(fillColor(getFillColor(m@riskLevel)), vsize(20),hsize(20),onMouseDown(bool (int butnr, map[KeyModifier,bool] modifiers){
-edit(m@src); return true;}));
-	   //println("method");
+		edit(m@src,getRiskText(m@riskLevel)); return true;}));
 	 }
 	}
 	
 	return ret;
+}
+
+public Figure stairs(int nr,str name,int liOC){
+	props = (nr == 0) ? [] : [mouseOver(stairs(nr-1, name, liOC))];
+	return box(text("<name> <liOC>",fontColor("white"),( nr %2 == 0 )?  fontSize(20) : fontSize(1)),props + 
+        [ ( nr %2 == 0 )?  left() : right(),
+          resizable(false),size(10),fillColor("black"),valign(0.25) ]);
+}
+
+public str getRiskText(int riskLevel){
+	if(riskLevel==RISK_LEVEL_LOW)
+		return "Low complexity";
+		
+	if(riskLevel==RISK_LEVEL_MEDIUM)
+	return "Medium complexity";
+		
+	if(riskLevel==RISK_LEVEL_HIGH)
+		return "High complexity!";
+		
+	if(riskLevel==RISK_LEVEL_VERY_HIGH)
+		return "Very HIGH complexity!";
+	
+return "CheesyFizzleNawizzle";
+
 }
 
 public Color getFillColor(int riskLevel){
