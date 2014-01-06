@@ -22,8 +22,7 @@ public list[Figure] getMethodBoxes(decl){
 ret = [];
 	visit(decl){
 	 case m: \method(Type \return, str mname, list[Declaration] parameters, list[Expression] exceptions, Statement impl) : {
-	 	println(m);
-		 ret += box(fillColor(getFillColor(m@riskLevel)), vsize(20),hsize(20));
+	   ret += box(fillColor(getFillColor(m@riskLevel)), vsize(20),hsize(20));
 	 }
 	}
 	
