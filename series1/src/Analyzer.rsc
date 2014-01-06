@@ -9,6 +9,7 @@ import complexity::ComplexityAnalyzer;
 import Prelude;
 import sig::rating;
 import vis::VisLOC;
+import vis::visComplexity;
 import vis::Figure;
 import vis::Render;
 import vis::KeySym;
@@ -27,10 +28,11 @@ public void analyzeProjects(){
 	int stops  = realTime();
 	println("Finished: Make Tree in: <stops-starts> ms");
 	println("TOTAL loc: <project@LOC>");
-	createNavigationScreen(project);
 	////////COMPLEXITY
 	//starts  = realTime();
-	//project =  getComplexityTree(project);
+	project =  getComplexityTree(project);
+	createNavigationScreen(project);
+	
 	//stops = realTime();
 	//println("completed complexity analysis in: <stops-starts> ms");
 	//starts  = realTime();
@@ -101,8 +103,7 @@ fillColor("red"))]);
 
 boxB = vcat([box(text("back"),vshrink(0.1),
 onMouseDown(bool (int butnr, map[KeyModifier,bool] modifiers){render(screen);})),
-box(text("complexity view"),
-fillColor("red"))]);
+vis::visComplexity::getView(project)]);
 
 boxC = vcat([box(text("back"),vshrink(0.1),
 onMouseDown(bool (int butnr, map[KeyModifier,bool] modifiers){render(screen);})),
@@ -121,3 +122,4 @@ render(boxC);}))
 ]);
 render(screen);
 }
+

@@ -81,17 +81,17 @@ private Resource getComplexityOfProject(Resource p){
  int methods = 0;
  int methodComplexity = 0;
  int constructorComplexity = 0;
- set[Resource] conts=  bottom-up visit(p.contents){
+ return bottom-up visit(p){
 	  case sf : file(id) :{
 	   sf@classes =  classes;
 	   classes = {};
 	   Declaration decl=  visit(sf@declaration){
 	   case c :  \constructor(str name, list[Declaration] parameters, list[Expression] exceptions, Statement impl):{
-	   cc = complexity::StatementComplexity::get(impl) + 1;
-	   c@complexity = cc;
-	   c@riskLevel = getRiskLevel(cc);
-	   constructorComplexity += cc;
-	   insert(c);
+		   cc = complexity::StatementComplexity::get(impl) + 1;
+		   c@complexity = cc;
+		   c@riskLevel = getRiskLevel(cc);
+		   constructorComplexity += cc;
+		   insert(c);
 	  }
 	  case m: \method(Type \return, str mname, list[Declaration] parameters, list[Expression] exceptions, Statement impl) : {
 	   methods += 1;
@@ -122,14 +122,15 @@ private Resource getComplexityOfProject(Resource p){
 	   methodComplexity = 0;	
 	   constructorComplexity = 0;							   
 	   insert(cl);
-	  }
-	  
+	  }  
 	   
 	  };
+	  sf@declaration = decl;
 	  insert sf;
 	  }
  };
-return project(p.id,conts);
+ //p.contents = conts;
+ //return p;
 }
 
 
