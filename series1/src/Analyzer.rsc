@@ -24,7 +24,7 @@ public void analyzeProjects(){
 	
 	//MAKE TREE 
 	int starts = realTime();
-	Resource project = makeTree(smallProjectLocation); 
+	Resource project = makeTree(smallPreparedProjectLocation); 
 	int stops  = realTime();
 	println("Finished: Make Tree in: <stops-starts> ms");
 	println("TOTAL loc: <project@LOC>");
@@ -97,15 +97,15 @@ private void createNavigationScreen(project){
 	
 	
 boxA = vcat([box(text("back"),vshrink(0.1),
-onMouseDown(bool (int butnr, map[KeyModifier,bool] modifiers){render(screen);})),
+onMouseDown(bool (int butnr, map[KeyModifier,bool] modifiers){render(screen); return true;})),
 visualizeItDep(project)]);
 
 boxB = vcat([box(text("back"),vshrink(0.1),
-onMouseDown(bool (int butnr, map[KeyModifier,bool] modifiers){render(screen);})),
+onMouseDown(bool (int butnr, map[KeyModifier,bool] modifiers){render(screen); return true;})),
 vis::visComplexity::getView(project)]);
 
 boxC = vcat([box(text("back"),vshrink(0.1),
-onMouseDown(bool (int butnr, map[KeyModifier,bool] modifiers){render(screen);})),
+onMouseDown(bool (int butnr, map[KeyModifier,bool] modifiers){render(screen); return true;})),
 visualizeItLoc(project)]);
 
 screen = vcat([
