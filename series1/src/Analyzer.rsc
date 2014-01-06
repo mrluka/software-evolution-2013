@@ -111,13 +111,13 @@ visualizeItLoc(project)]);
 screen = vcat([
 box(text("dependencies"),
 onMouseDown(bool (int butnr, map[KeyModifier,bool] modifiers){
-render(boxA);})),
+render(boxA); return true;})),
 box(text("complexity"),
 onMouseDown(bool (int butnr, map[KeyModifier,bool] modifiers){
-render(boxB);})),
+render(boxB);return true;})),
 box(text("duplication"),
 onMouseDown(bool (int butnr, map[KeyModifier,bool] modifiers){
-render(boxC);}))
+render(boxC);return true;}))
 ]);
 render(screen);
 }
