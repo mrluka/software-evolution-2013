@@ -100,18 +100,19 @@ descriptionDuplication = "This view shows the duplication of code throughout the
 descriptionDependencies = "This graph shows the dependencies of the components with each other and with external components. Each node represents a package, and each edge represents a usage, based on import statements";
 	
 boxA = vcat([box(text("back"),vshrink(0.001),
-onMouseDown(bool (int butnr, map[KeyModifier,bool] modifiers){render(screen);})),
+onMouseDown(bool (int butnr, map[KeyModifier,bool] modifiers){render(screen);return true;})),
 box(text(descriptionDependencies),vshrink(0.001)),
 visualizeItDep(project)]);
 
 boxB = vcat([box(text("back"),vshrink(0.001),
-onMouseDown(bool (int butnr, map[KeyModifier,bool] modifiers){render(screen);})),
+onMouseDown(bool (int butnr, map[KeyModifier,bool] modifiers){render(screen);return true;})),
 box(text(descriptionComplexity),vshrink(0.001)),
 vis::visComplexity::getView(project)]);
 
 boxC = vcat([box(text("back"),vshrink(0.001),
-onMouseDown(bool (int butnr, map[KeyModifier,bool] modifiers){render(screen);})),
+onMouseDown(bool (int butnr, map[KeyModifier,bool] modifiers){render(screen);return true;})),
 box(text(descriptionDuplication),vshrink(0.001)),
+
 visualizeItLoc(project)]);
 
 screen = vcat([
