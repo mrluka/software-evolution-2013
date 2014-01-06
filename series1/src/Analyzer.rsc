@@ -95,17 +95,23 @@ public void printToFile(value toPrint,bool saveToFile){
 private void createNavigationScreen(project){
 	
 	
+descriptionComplexity = "Each block represents a method. The darker the color, the higher is the cyclomatic complexity of the method.";
+descriptionDuplication = "This view shows the duplication of code throughout the system. The analysis only detects duplication of six lines (in a row) and more. Each block represents a compilation unit. The larger a block is, the more lines of code are contained in the compilation unit. The red areas indicate duplicated code.";
+descriptionDependencies = "This graph shows the dependencies of the components with each other and with external components. Each node represents a package, and each edge represents a usage, based on import statements";
 	
-boxA = vcat([box(text("back"),vshrink(0.1),
+boxA = vcat([box(text("back"),vshrink(0.001),
 onMouseDown(bool (int butnr, map[KeyModifier,bool] modifiers){render(screen);})),
+box(text(descriptionDependencies),vshrink(0.001)),
 visualizeItDep(project)]);
 
-boxB = vcat([box(text("back"),vshrink(0.1),
+boxB = vcat([box(text("back"),vshrink(0.001),
 onMouseDown(bool (int butnr, map[KeyModifier,bool] modifiers){render(screen);})),
+box(text(descriptionComplexity),vshrink(0.001)),
 vis::visComplexity::getView(project)]);
 
-boxC = vcat([box(text("back"),vshrink(0.1),
+boxC = vcat([box(text("back"),vshrink(0.001),
 onMouseDown(bool (int butnr, map[KeyModifier,bool] modifiers){render(screen);})),
+box(text(descriptionDuplication),vshrink(0.001)),
 visualizeItLoc(project)]);
 
 screen = vcat([
