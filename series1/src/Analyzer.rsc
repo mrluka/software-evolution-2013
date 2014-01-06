@@ -13,7 +13,7 @@ import vis::visComplexity;
 import vis::Figure;
 import vis::Render;
 import vis::KeySym;
-
+import vis::Dependency;
 
 //Analyzer is the starting point. It uses TreeProcessor to get the project tree, which is then used for further analysis with the help of TreeAnalyzer
 public void analyzeProjects(){
@@ -98,8 +98,7 @@ private void createNavigationScreen(project){
 	
 boxA = vcat([box(text("back"),vshrink(0.1),
 onMouseDown(bool (int butnr, map[KeyModifier,bool] modifiers){render(screen);})),
-box(text("dependency view"),
-fillColor("red"))]);
+visualizeItDep(project)]);
 
 boxB = vcat([box(text("back"),vshrink(0.1),
 onMouseDown(bool (int butnr, map[KeyModifier,bool] modifiers){render(screen);})),
