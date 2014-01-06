@@ -24,7 +24,7 @@ public void analyzeProjects(){
 	
 	//MAKE TREE 
 	int starts = realTime();
-	Resource project = makeTree(smallPreparedProjectLocation); 
+	Resource project = makeTree(smallProjectLocation); 
 	int stops  = realTime();
 	println("Finished: Make Tree in: <stops-starts> ms");
 	println("TOTAL loc: <project@LOC>");
